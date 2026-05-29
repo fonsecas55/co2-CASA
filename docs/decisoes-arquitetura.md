@@ -216,6 +216,17 @@ Documento vivo das decisões tomadas em conjunto. Cada entrada tem **decisão**,
 **Motivo**: 15–24 min mensais é confortável. GHA free tier dá 2000 min/mês private (~80 execuções inteiras). Simplicidade > optimização prematura.
 **Re-avaliar quando**: número de regiões > 5, ou se o tempo por região aumentar (mais bandas, mais resolução).
 
+## ADR-017 — Orquestração sequencial e inputs pré-alinhados (Bloco 3)
+
+**Data**: 2026-05-29
+**Decisão**:
+1. O loop de janelas do `pipeline.py` é **sequencial** na v1. `asyncio` não se aplica (trabalho CPU/GDAL-bound, não I/O-await); o paralelismo real (`concurrent.futures.ProcessPoolExecutor` sobre janelas) fica adiado conforme ADR-012, com a costura de acumulação desenhada para o permitir sem reescrita.
+2. O `pipeline.py` assume os rasters de entrada **já na grade-alvo comum** (mesmo CRS/transform/shape). O resampling (Sentinel-3 LST 1 km→10 m via `WarpedVRT`) e a exportação GEE vivem na camada `inputs/` (offline, bloco posterior). O pipeline lê a grade do raster de referência (banda red) e valida que os restantes batem por shape.
+**Motivo**: mantém o Bloco 3 focado em windowing + matemática + acumulação, testável com fixtures GeoTIFF sintéticas sem depender dos dados reais Sentinel (ainda por migrar) nem de acesso GEE (ainda por aprovar).
+**Implicações**:
+- `grid.py` calcula a grade-alvo (bbox→UTM→10 m) que a camada de prep usará para reprojectar/resamplar; o `pipeline.py` confia nela.
+- Masking geométrico fino (rasterizar WKT) e WarpedVRT ficam como TODO da camada `inputs/`.
+
 ## ADR-010 — Janela temporal mensal
 
 **Data**: 2026-05-27

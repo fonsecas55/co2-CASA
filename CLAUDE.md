@@ -189,6 +189,27 @@ Detalhe em `docs/literatura.md`. Referências load-bearing para a refatoração:
 
 Atualizada quando pedido. Formato: `data — tarefa — o que ficou por fazer`.
 
+### 2026-05-29 — Bloco 3 (orquestração + pipeline windowed) [concluído]
+
+**Feito**: `grid.py` + `pipeline.py` + `reports.py` implementados e verdes (78 testes no total; ruff + mypy limpos sobre `src`/`tests`).
+- `grid.py`: `utm_epsg_from_lonlat` + `target_grid_from_bbox(bbox_lonlat) -> TargetGrid` (UTM, north-up, snap outward a 10 m). 7 testes.
+- `pipeline.py`: `iter_windows`, `run_region(inputs, cfg, month, out)` lê a grade do raster de referência (red), valida shape dos outros (`ValueError "pre-aligned"`), itera janelas, acumula `total_npp_c_t`/`total_npp_co2_t`/`valid_pixels`/`vegetation_pixels`, escreve COG float32 deflate tiled. Teste-chave `test_windowed_accumulation_is_block_invariant` (ADR-012: totais independentes de `window_size`, block 256 vs 16, `rel=1e-9`). 8 testes.
+- `reports.py`: `build_report` → `RegionReport` (totais, `CarbonBalance` emissões−absorvido + `offset_fraction`, `Provenance`), `write_report` JSON indent=2. 8 testes.
+- mypy: alinhado `FloatArray` do pipeline a `NDArray[np.floating]` (era `float64`); tuplos de config para `fpar` via `np.asarray`. ruff: removidos `int()` redundantes em `grid.py` (RUF046). Nota: `tools/` (extractor PDF legacy) ainda tem lint pendente, fora de scope.
+
+**Por fazer** (camada `inputs/`, bloco posterior): WarpedVRT resample S3 LST, export GEE Dynamic World, rasterização da geometria (WKT→máscara). Calibrar placeholders (percentis FPAR/WSC, t_opt, geometria/população reais de Oeiras).
+
+**Plano** (aprovado): infraestrutura de I/O que gere memória do servidor doméstico.
+- `grid.py`: grade-alvo comum a partir do bbox da região → CRS UTM da zona + resolução 10 m. `target_grid_from_bbox(bbox_lonlat) -> TargetGrid(crs, transform, width, height, resolution)`. Puro (pyproj/rasterio.warp, sem ficheiros).
+- `pipeline.py`: orquestrador. Loop de janelas (`window_size`, ex. 1024²), lê pedaços com `rasterio` (`window=`), alimenta as funções puras do Bloco 1 com os parâmetros imutáveis do Bloco 2 (`config.load`), acumula somas parciais de NPP-C/CO₂ (× área via `npp.density_to_tonnes`), escreve COG de saída windowed.
+- `reports.py`: agrega metadados + totais → JSON estruturado para a Vercel (totais t C/t CO₂, balanço vs emissões da população, proveniência da config, grid/CRS/bbox).
+
+**Duas decisões de engenharia (ver ADR-017)**:
+1. **Sequencial, não assíncrono** — trabalho é CPU/GDAL-bound; `asyncio` não traz ganho. Paralelismo (`ProcessPoolExecutor` sobre janelas) adiado por ADR-012. Costura limpa deixada para depois.
+2. **Inputs pré-alinhados à grade-alvo** — resample S3 LST (WarpedVRT) e export GEE vivem na camada `inputs/` (offline, bloco posterior). `pipeline.py` lê a grade do raster de referência (red) e valida que os outros batem. `grid.py` define a grade-alvo que a camada de prep usará.
+
+**Isolamento mantido**: janelas e geo-referências morrem no orquestrador; Bloco 1 continua a receber só arrays puros.
+
 ### 2026-05-29 — Ponte GitHub + Bloco 2 (config layer)
 
 **Feito**:
