@@ -1,0 +1,10 @@
+# Climatological optimal growth temperature (degrees C) per canonical class.
+#
+# PLACEHOLDER VALUES — TODO: derive from long-term climatology / historical NPP
+# series per biome (Potter 1993), NOT from the current scene mean (the legacy bug).
+# non_vegetation omitted -> default 20 (irrelevant: masked by epsilon_max = 0).
+trees: 22.0
+shrub_and_scrub: 24.0
+grass: 25.0
+crops: 24.0
+flooded_vegetation: 23.0

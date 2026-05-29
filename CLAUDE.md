@@ -189,6 +189,26 @@ Detalhe em `docs/literatura.md`. Referências load-bearing para a refatoração:
 
 Atualizada quando pedido. Formato: `data — tarefa — o que ficou por fazer`.
 
+### 2026-05-29 — Ponte GitHub + Bloco 2 (config layer)
+
+**Feito**:
+- Ambiente pinado a Python 3.12 (`.python-version`, commit `101156c`); `.venv` recriado em 3.12.9.
+- **Remoto GitHub ligado**: chave Ed25519 gerada no DFDesk (`~/.ssh/id_ed25519`, sem passphrase). Atenção: registada como **deploy key** do repo `co2-CASA` (não chave de conta) — só serve este repo. Remoto `git@github.com:fonsecas55/co2-CASA.git`; `main` pushed e a fazer track de `origin/main`. Conta: **@fonsecas55**.
+- **Bloco 2 — config layer**: `src/casa/config.py` (Pydantic v2, todos os modelos `frozen=True`). Tabelas numéricas guardadas como **tuplos** indexados por código canónico (imutabilidade real, não só anti-reatribuição). `RegionConfig.bbox` = `computed_field` que deriva (minx,miny,maxx,maxy) do WKT via shapely (para Bloco 3 alimentar Sentinel Hub/GEE). Loaders fail-fast; `load(config_dir, region)` resolve a árvore toda e seleciona a tabela ε_max por `pipeline.epsilon_max`.
+- Ficheiros `config/`: `pipeline.yml`, `epsilon_max/{xu2023,relatorio}.yml`, `fpar_percentiles.yml`, `wsc_percentiles.yml`, `t_opt_by_biome.yml`, `regions/oeiras.yml`.
+- `types-PyYAML` adicionado às dev deps (mypy strict).
+- 55 testes (14 novos de config, incl. end-to-end que carrega os YAML reais e alimenta `emax`); ruff + mypy strict limpos.
+
+**Placeholders explícitos (TODO, calibrar com dados reais em bloco posterior)**:
+- `fpar_percentiles.yml`: NDVI 0.05/0.95 genérico (falta percentis 5/95 por classe sobre amostra histórica).
+- `wsc_percentiles.yml`: SIMI 0/1 (falta percentis 2/98).
+- `t_opt_by_biome.yml`: valores aproximados (falta climatologia por bioma).
+- `regions/oeiras.yml`: WKT quadrado placeholder + população a confirmar (geometria real fica para a migração de binários).
+
+**Retomar por aqui**:
+1. **Bloco 3 — camada de I/O + orquestrador windowed**: `grid.py` (grade-alvo comum S2 10 m), leitura `rasterio` por janela, `pipeline.py` que itera janelas, chama o núcleo do Bloco 1 com os parâmetros do `config.load(...)`, e **acumula** somas parciais (× área via `npp.density_to_tonnes`). `reports.py` para o JSON de totais.
+2. Migrar dados binários (Oeiras WKT real, `data/sol/ghi_base.tif`, ESA WorldCover fallback) — ainda adiado.
+
 ### 2026-05-29 — Bloco 1 (núcleo matemático puro) concluído
 
 **Feito**:
