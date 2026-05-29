@@ -35,24 +35,29 @@ Sou engenheiro de telecomunicações e computadores. A apresentação do projeto
 
 ## Comandos Essenciais
 
-_A preencher após análise da diretoria local — ainda não definidos._
-
 ```
-# Instalar dependências
-# <preencher>
+# Instalar dependências (cria .venv + resolve uv.lock)
+uv sync --extra dev
 
 # Correr testes
-# <preencher>
-
-# Build
-# <preencher>
+uv run pytest -q
 
 # Lint / format
-# <preencher>
+uv run ruff check src tests
+uv run ruff format src tests
 
-# Deploy / preview (Vercel)
-# <preencher>
+# Type-check (strict)
+uv run mypy
+
+# CLI
+uv run casa --help
+
+# Build / Deploy / preview (Vercel)
+# <preencher — Fase frontend>
 ```
+
+Nota: `uv` cria o `.venv` com o Python do sistema se satisfizer `>=3.12`
+(aqui 3.14). O código mantém sintaxe-alvo 3.12 (ruff/mypy `target=py312`).
 
 ## Padrões a Evitar
 
@@ -183,6 +188,20 @@ Detalhe em `docs/literatura.md`. Referências load-bearing para a refatoração:
 ## Notas por Sessão / PR
 
 Atualizada quando pedido. Formato: `data — tarefa — o que ficou por fazer`.
+
+### 2026-05-29 — Bloco 1 (núcleo matemático puro) concluído
+
+**Feito**:
+- Ambiente destravado: `uv` instalado (0.11.17), `uv sync --extra dev` OK, smoke test 3/3.
+- `git init` + commit `76eeb8d` (Bloco 0); branch renomeado `master` → `main`; identidade git **local** ao repo (Diogo Fonseca / fonsecacdiogo@gmail.com).
+- 8 módulos puros em `src/casa/`: `ndvi`, `landcover` (ADR-011 adapters DW/ESA), `fpar` (Xu 2023, percentis por classe injetados), `wsc` (Wu 2022, percentis injetados), `tstress` (T_opt climatológico como argumento), `sol`, `emax` (tabela canónico→ε_max injetada), `npp`.
+- **Fronteira validada com utilizador**: módulos puros são array→array sem `window` (windowing é I/O, fica no `pipeline.py` — desvia do ADR-012 só para os módulos puros). `npp.density_to_tonnes` faz × área_pixel ao nível do array (corrige o `/1e6` sem área do legacy); pipeline só acumula somas entre janelas.
+- 41 testes unitários (fixtures sintéticas) + smoke; ruff e mypy strict limpos.
+
+**Ponto onde parámos / retomar por aqui**:
+1. **Remoto GitHub pendente**: `gh` não instalado. Falta instalar/autenticar `gh` (ou dar URL de repo vazio) → `git remote add origin … && git push -u origin main`.
+2. **Bloco 2** — config layer: `config.py` (YAML→Pydantic), ficheiros `config/regions/{oeiras,…}.yml`, `config/epsilon_max/{xu2023,relatorio}.yml`, `config/fpar_percentiles.yml`, `config/wsc_percentiles.yml`, `config/t_opt_by_biome.yml`. Wiring dos parâmetros que os módulos puros recebem hoje como argumentos.
+3. Migrar dados binários (Oeiras WKT, `data/sol/ghi_base.tif`, ESA WorldCover fallback) — adiado do Bloco 0.
 
 ### 2026-05-28 — Bootstrap do refactor (Bloco 0), pausa para retomar amanhã
 
