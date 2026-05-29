@@ -189,6 +189,18 @@ Detalhe em `docs/literatura.md`. Referências load-bearing para a refatoração:
 
 Atualizada quando pedido. Formato: `data — tarefa — o que ficou por fazer`.
 
+### >>> RETOMAR AQUI (2026-05-29, fim do dia) <<<
+
+**Estado**: Blocos 0→3 concluídos, verdes e no remoto (`origin/main`, último commit `e382907`). 78 testes passam; ruff + mypy limpos sobre `src`/`tests`. Ambiente: `uv sync` em Python 3.12.9 (`.python-version` pinado).
+
+**Arranque amanhã**: `cd urban-carbon-sink` → `uv sync` (se preciso) → `python -m uv run pytest -q` para confirmar verde.
+
+**Decisão pendente (eu perguntei, falta resposta tua)**: próximo passo é
+- (A) camada `inputs/` com **fixtures sintéticas** — WarpedVRT resample S3 LST, export GEE Dynamic World, rasterização da geometria (WKT→máscara); ou
+- (B) **calibrar a config real de Oeiras** primeiro (geometria/WKT, população, emissões per capita, percentis FPAR/WSC, t_opt) — hoje são placeholders TODO, por isso `offset_fraction`/`net_co2_balance_t` ainda não têm significado físico.
+
+**Dívida menor**: `tools/` (extractor PDF legacy) tem lint ruff pendente, deixado fora de scope. Decidir: corrigir ou adicionar ao `exclude` do ruff.
+
 ### 2026-05-29 — Bloco 3 (orquestração + pipeline windowed) [concluído]
 
 **Feito**: `grid.py` + `pipeline.py` + `reports.py` implementados e verdes (78 testes no total; ruff + mypy limpos sobre `src`/`tests`).
